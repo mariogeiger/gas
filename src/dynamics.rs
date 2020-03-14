@@ -2,7 +2,7 @@ use core;
 
 use crate::vec3::{dot, V};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ball {
     pub x: V,
     pub v: V,
@@ -10,7 +10,7 @@ pub struct Ball {
     pub r: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Wall {
     pub x: V,
     pub v: V,
@@ -79,7 +79,7 @@ fn ball_wall_collision(a: &Ball, w: &Wall) -> (V, V) {
     collision(w.n, a.v, a.m, w.v, w.m)
 }
 
-pub fn evolve(balls: &mut Vec<Ball>, walls: &mut Vec<Wall>) -> f64 {
+pub fn evolve(balls: &Vec<Ball>, walls: &Vec<Wall>) -> (f64, Vec<Ball>, Vec<Wall>) {
     let mut dt = core::f64::INFINITY;
     let mut bi = -1;
     let mut bj = -1;
@@ -88,6 +88,9 @@ pub fn evolve(balls: &mut Vec<Ball>, walls: &mut Vec<Wall>) -> f64 {
     for i in 0..balls.len() {
         for j in i + 1..balls.len() {
             let tmp = ball_ball_collision_time(&balls[i], &balls[j]);
+            // if tmp < -8.0 {
+            //     println!("{:?}\n{:?}\n{}", balls[i], balls[j], tmp);
+            // }
             if tmp < dt {
                 bi = i as isize;
                 bj = j as isize;
@@ -105,6 +108,9 @@ pub fn evolve(balls: &mut Vec<Ball>, walls: &mut Vec<Wall>) -> f64 {
             }
         }
     }
+
+    let mut balls = balls.clone();
+    let mut walls = walls.clone();
 
     for i in 0..balls.len() {
         let v = balls[i].v;
@@ -126,5 +132,5 @@ pub fn evolve(balls: &mut Vec<Ball>, walls: &mut Vec<Wall>) -> f64 {
         walls[w as usize].v = vw;
     }
 
-    dt
+    (dt, balls, walls)
 }

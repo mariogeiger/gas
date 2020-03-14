@@ -1,5 +1,5 @@
 #[derive(PartialEq, Clone, Copy)]
-pub struct V(f64, f64, f64);
+pub struct V(pub f64, pub f64, pub f64);
 
 impl V {
     pub fn new(x: f64, y: f64, z: f64) -> V {
