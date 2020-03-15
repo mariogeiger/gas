@@ -79,8 +79,11 @@ fn ball_wall_collision(a: &Ball, w: &Wall) -> (V, V) {
     collision(w.n, a.v, a.m, w.v, w.m)
 }
 
-pub fn evolve(balls: &Vec<Ball>, walls: &Vec<Wall>) -> (f64, Vec<Ball>, Vec<Wall>) {
-    let mut dt = core::f64::INFINITY;
+pub fn evolve(
+    mut balls: Vec<Ball>,
+    mut walls: Vec<Wall>,
+    mut dt: f64,
+) -> (Vec<Ball>, Vec<Wall>, f64, f64) {
     let mut bi = -1;
     let mut bj = -1;
     let mut w = -1;
@@ -88,9 +91,6 @@ pub fn evolve(balls: &Vec<Ball>, walls: &Vec<Wall>) -> (f64, Vec<Ball>, Vec<Wall
     for i in 0..balls.len() {
         for j in i + 1..balls.len() {
             let tmp = ball_ball_collision_time(&balls[i], &balls[j]);
-            // if tmp < -8.0 {
-            //     println!("{:?}\n{:?}\n{}", balls[i], balls[j], tmp);
-            // }
             if tmp < dt {
                 bi = i as isize;
                 bj = j as isize;
@@ -109,28 +109,29 @@ pub fn evolve(balls: &Vec<Ball>, walls: &Vec<Wall>) -> (f64, Vec<Ball>, Vec<Wall
         }
     }
 
-    let mut balls = balls.clone();
-    let mut walls = walls.clone();
-
-    for i in 0..balls.len() {
-        let v = balls[i].v;
-        balls[i].x += v * dt;
-    }
-    for i in 0..walls.len() {
-        let v = walls[i].v;
-        walls[i].x += v * dt;
+    if dt > 0.0 {
+        for a in &mut balls {
+            a.x += a.v * dt;
+        }
+        for w in &mut walls {
+            w.x += w.v * dt;
+        }
     }
 
+    let mut work = 0.0;
     if bj >= 0 {
         let (va, vb) = ball_ball_collision(&balls[bi as usize], &balls[bj as usize]);
         balls[bi as usize].v = va;
         balls[bj as usize].v = vb;
     }
     if bj == -1 {
-        let (va, vw) = ball_wall_collision(&balls[bi as usize], &walls[w as usize]);
-        balls[bi as usize].v = va;
-        walls[w as usize].v = vw;
+        let a = &mut balls[bi as usize];
+        let w = &mut walls[w as usize];
+        let (va, vw) = ball_wall_collision(a, w);
+        work = dot(a.m * (va - a.v), w.v);
+        a.v = va;
+        w.v = vw;
     }
 
-    (dt, balls, walls)
+    (balls, walls, dt, work)
 }

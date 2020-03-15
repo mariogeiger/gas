@@ -14,6 +14,13 @@ pub fn dot(a: V, b: V) -> f64 {
     a.0 * b.0 + a.1 * b.1 + a.2 * b.2
 }
 
+impl std::ops::Neg for V {
+    type Output = V;
+    fn neg(self) -> V {
+        V(-self.0, -self.1, -self.2)
+    }
+}
+
 impl std::ops::Add for V {
     type Output = V;
     fn add(self, b: V) -> V {

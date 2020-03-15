@@ -14,44 +14,23 @@ use glium::Surface;
 use vec3::V;
 
 fn main() {
-    let mut balls = vec![
-        Ball {
-            x: V::new(-0.1, 0.0, 0.0),
-            v: V::new(-10.0, 0.0, 0.0),
-            m: 1.0,
-            r: 0.1,
-        },
-        Ball {
-            x: V::new(0.1, 0.0, 0.0),
-            v: V::new(1.0, 0.0, 0.0),
-            m: 1.0,
-            r: 0.1,
-        },
-        Ball {
-            x: V::new(0.0, 0.1, 0.0),
-            v: V::new(0.0, 0.01, 0.0),
-            m: 1.0,
-            r: 0.1,
-        },
-        Ball {
-            x: V::new(0.0, 0.3, 0.0),
-            v: V::new(0.0, 0.02, 0.0),
-            m: 1.0,
-            r: 0.1,
-        },
-        Ball {
-            x: V::new(0.0, -0.1, 0.0),
-            v: V::new(0.0, -0.01, 0.0),
-            m: 1.0,
-            r: 0.1,
-        },
-        Ball {
-            x: V::new(0.0, -0.3, 0.0),
-            v: V::new(0.0, -0.02, 0.0),
-            m: 1.0,
-            r: 0.1,
-        },
-    ];
+    let mut balls = vec![Ball {
+        x: V::new(-0.9, 0.0, 0.0),
+        v: V::new(5.0, 0.0, 0.0),
+        m: 1.0,
+        r: 0.1,
+    }];
+    for &x in &[-0.42, -0.21, 0.0, 0.21, 0.42] {
+        for &y in &[-0.42, -0.21, 0.0, 0.21, 0.42] {
+            balls.push(Ball {
+                x: V::new(x, y, 0.0),
+                v: V::new(0.0, 0.01, 0.0),
+                m: 1.0,
+                r: 0.1,
+            });
+        }
+    }
+
     let mut walls = vec![
         Wall {
             x: V::new(1.0, 0.0, 0.0),
@@ -60,8 +39,8 @@ fn main() {
             m: core::f64::INFINITY,
         },
         Wall {
-            x: V::new(-1.0, 0.0, 0.0),
-            v: V::new(0.0, 0.0, 0.0),
+            x: V::new(-2.0, 0.0, 0.0),
+            v: V::new(0.5, 0.0, 0.0),
             n: V::new(1.0, 0.0, 0.0),
             m: core::f64::INFINITY,
         },
@@ -154,28 +133,32 @@ fn main() {
     let mut new_walls = walls.clone();
     let mut dt = 0.0;
     let start = std::time::Instant::now();
+    let mut last = start;
 
     event_loop.run(move |event, _, control_flow| {
-        t += 1.0 / 120.0;
-        *control_flow = glutin::event_loop::ControlFlow::WaitUntil(
-            start + std::time::Duration::from_secs_f64(t),
-        );
-
-        match event {
+        match &event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
                 }
-                _ => {}
+                _ => (),
             },
             glutin::event::Event::NewEvents(cause) => match cause {
                 glutin::event::StartCause::ResumeTimeReached { .. } => (),
                 glutin::event::StartCause::Init => (),
-                _ => {}
+                glutin::event::StartCause::WaitCancelled { .. } => (),
+                _ => (),
             },
-            _ => {}
+            _ => (),
         }
+
+        if (std::time::Instant::now() - last).as_secs_f64() < 1.0 / 120.0 {
+            // println!("{:?}", event);
+            return;
+        }
+        last = std::time::Instant::now();
+        t = (std::time::Instant::now() - start).as_secs_f64();
 
         while t > t_checkpoint + dt {
             println!("evolve {:.1} + {:.3}", t_checkpoint, dt);
@@ -189,10 +172,18 @@ fn main() {
             balls = new_balls.clone();
             walls = new_walls.clone();
 
-            let (dt_s, new_balls_, new_walls_) = evolve(&balls, &walls);
+            let (new_balls_, new_walls_, dt_s, _work) = evolve(balls.clone(), walls.clone(), core::f64::INFINITY);
             new_balls = new_balls_;
             new_walls = new_walls_;
             dt = dt_s;
+
+            println!("{} {}", new_walls[1].x, new_walls[1].v);
+            if new_walls[1].x.0 > 0.43 && new_walls[1].v.0 > 0.0 {
+                new_walls[1].v = -new_walls[1].v;
+            }
+            if new_walls[1].x.0 < -2.0 && new_walls[1].v.0 < 0.0 {
+                new_walls[1].v = -new_walls[1].v;
+            }
         }
 
         let mut target = display.draw();
