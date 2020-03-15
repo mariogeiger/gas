@@ -8,8 +8,6 @@ pub struct Vertex {
     position: (f32, f32, f32),
 }
 
-//implement_vertex!(Vertex, position);
-
 impl glium::vertex::Vertex for Vertex {
     #[inline]
     fn build_bindings() -> glium::vertex::VertexFormat {

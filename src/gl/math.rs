@@ -2,10 +2,10 @@ use std::f32;
 use std::ops;
 
 #[derive(Copy, Clone)]
-pub struct Mat4(pub [[f32; 4]; 4]);
+pub struct Mat4([[f32; 4]; 4]);
 
 #[derive(Copy, Clone)]
-pub struct Mat3(pub [[f32; 3]; 3]);
+pub struct Mat3([[f32; 3]; 3]);
 
 #[allow(dead_code)]
 impl Mat3 {
@@ -14,6 +14,9 @@ impl Mat3 {
     01 11 21
     02 12 22
     */
+    pub fn as_array(&self) -> [[f32; 3]; 3] {
+        self.0
+    }
     pub fn identity() -> Mat3 {
         Mat3([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     }
@@ -51,6 +54,9 @@ impl Mat4 {
     02 12 22 32
     03 13 23 33
     */
+    pub fn as_array(&self) -> [[f32; 4]; 4] {
+        self.0
+    }
     pub fn identity() -> Mat4 {
         Mat4([
             [1.0, 0.0, 0.0, 0.0],
@@ -96,6 +102,16 @@ impl Mat4 {
             [x * z * ic - y * s, y * z * ic + x * s, z * z * ic + c, 0.0],
             [0.0, 0.0, 0.0, 1.0],
         ])
+    }
+    pub fn rotation_from_normal(mut x: f32, mut y: f32, mut z: f32) -> Mat4 {
+        let mut len = x * x + y * y + z * z;
+        if len != 1.0 && len != 0.0 {
+            len = len.sqrt();
+            x /= len;
+            y /= len;
+            z /= len;
+        }
+        Mat4::rotation(f32::atan2(y, x), 0.0, 0.0, 1.0) * Mat4::rotation(z.acos(), 0.0, 1.0, 0.0)
     }
     pub fn perspective(aspect_ratio: f32, fov: f32, znear: f32, zfar: f32) -> Mat4 {
         let f = 1.0 / (fov / 2.0).tan();
