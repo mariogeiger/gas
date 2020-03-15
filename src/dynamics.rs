@@ -24,13 +24,14 @@ fn ball_ball_collision_time(a: &Ball, b: &Ball) -> f64 {
     let x = b.x - a.x;
     let v = b.v - a.v;
     let r = a.r + b.r;
-    if dot(x, v) >= 0.0 {
+    let xv = dot(x, v);
+    if xv >= 0.0 {
         core::f64::INFINITY
     } else {
-        // println!("x = {:?}\nv = {:?}", x, v);
-        let dis = dot(x, v).powi(2) - dot(v, v) * (dot(x, x) - r * r);
+        let vv = dot(v, v);
+        let dis = xv * xv - vv * (dot(x, x) - r * r);
         if dis > 0.0 {
-            (-dot(x, v) - dis.sqrt()) / dot(v, v)
+            (-xv - dis.sqrt()) / vv
         } else {
             core::f64::INFINITY
         }

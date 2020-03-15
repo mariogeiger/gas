@@ -23,46 +23,46 @@ implement_vertex!(Vertex, position, normal);
 
 fn main() {
     let mut balls = Vec::new();
+    // balls.push(Ball {
+    //     x: V::new(-0.9, 0.0, 0.0),
+    //     v: V::new(5.0, 1.0, 1.1),
+    //     m: 1.0,
+    //     r: 0.1,
+    // });
     balls.push(Ball {
-        x: V::new(-0.9, 0.0, 0.0),
-        v: V::new(5.0, 1.0, 1.1),
-        m: 1.0,
-        r: 0.1,
+        x: V::new(-0.8, -0.8, -0.8),
+        v: V::new(0.015, 0.5, 10.),
+        m: 2.0,
+        r: 0.15,
     });
-    balls.push(Ball {
-        x: V::new(0.9, 0.0, 0.0),
-        v: V::new(1.0, 1.0, 1.1),
-        m: 3.0,
-        r: 0.2,
-    });
-    // for &x in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
-    //     for &y in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
-    //         for &z in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
-    //             balls.push(Ball {
-    //                 x: V::new(x * 0.2, y * 0.2, z * 0.2),
-    //                 v: V::new(x * 0.2, y * 0.2, z * 0.2),
-    //                 m: 1.0,
-    //                 r: 0.1,
-    //             });
-    //         }
-    //     }
-    // }
+    for &x in &[-2.0, -1.0, 0.0, 1.0, 2.0, 3.0] {
+        for &y in &[-2.0, -1.0, 0.0, 1.0, 2.0, 3.0] {
+            for &z in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
+                balls.push(Ball {
+                    x: V::new(x * 0.201, y * 0.201, z * 0.201),
+                    v: V::new(0.0, 0.0, 0.0),
+                    m: 1.0,
+                    r: 0.1,
+                });
+            }
+        }
+    }
 
     let mut walls = vec![
-        Wall {
-            x: V::new(0.0, 0.0, 0.0),
-            v: V::new(0.5, 0.0, 0.0),
-            j: V::new(0.0, 1.0, 0.0),
-            k: V::new(0.0, 0.0, 1.0),
-            m: core::f64::INFINITY,
-        },
-        Wall {
-            x: V::new(1.0, -1.0, -1.0),
-            v: V::new(0.0, 0.0, 0.0),
-            j: V::new(0.0, 2.0, 0.0),
-            k: V::new(0.0, 0.0, 2.0),
-            m: core::f64::INFINITY,
-        },
+        // Wall {
+        //     x: V::new(0.0, 0.0, 0.0),
+        //     v: V::new(0.5, 0.0, 0.0),
+        //     j: V::new(0.0, 1.0, 0.0),
+        //     k: V::new(0.0, 0.0, 1.0),
+        //     m: core::f64::INFINITY,
+        // },
+        // Wall {
+        //     x: V::new(1.0, -1.0, -1.0),
+        //     v: V::new(0.0, 0.0, 0.0),
+        //     j: V::new(0.0, 2.0, 0.0),
+        //     k: V::new(0.0, 0.0, 2.0),
+        //     m: core::f64::INFINITY,
+        // },
         Wall {
             x: V::new(-1.0, -1.0, -1.0),
             v: V::new(0.0, 0.0, 0.0),
@@ -171,7 +171,7 @@ fn main() {
         vec3 nn = normalize(n);
         vec3 nr = nl - 2 * nn * dot(nl,nn);
         float brightness = clamp(0, -dot(nn, nl), 1);
-        float specular = pow(max(nr.z, 0), 16);
+        float specular = pow(max(nr.z, 0), 60);
         vec3 hc = high_color;
         vec3 dc = dark_color;
         color = vec4(mix(dc, hc, brightness) + specular * vec3(1,1,1), 1);
@@ -316,8 +316,8 @@ fn main() {
                 view: view.as_array(),
                 perspective: pers.as_array(),
                 light: [0., 0., -3f32],
-                high_color: if i == 0 {[1.0, 0.0, 0.0f32]} else {[0.5, 0.5, 1.0f32]},
-                dark_color: if i == 0 {[0.5, 0.0, 0.0f32]} else {[0.4, 0.4, 0.5f32]},
+                high_color: if i == 0 {[1.0, 0.0, 0.0f32]} else {[0.7, 0.7, 0.7f32]},
+                dark_color: if i == 0 {[0.5, 0.0, 0.0f32]} else {[0.4, 0.4, 0.4f32]},
             };
 
             target
