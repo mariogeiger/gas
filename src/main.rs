@@ -22,24 +22,40 @@ struct Vertex {
 implement_vertex!(Vertex, position, normal);
 
 fn main() {
-    let mut balls = vec![Ball {
+    let mut balls = Vec::new();
+    balls.push(Ball {
         x: V::new(-0.9, 0.0, 0.0),
-        v: V::new(5.0, 0.0, 0.0),
+        v: V::new(5.0, 1.0, 1.1),
         m: 1.0,
         r: 0.1,
-    }];
-    for &x in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
-        for &y in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
-            balls.push(Ball {
-                x: V::new(x * 0.2, y * 0.2 + 1e-30, 0.0),
-                v: V::new(x * 1e-3, y * 1e-3 + 0.1, 0.01),
-                m: 1.0,
-                r: 0.1,
-            });
-        }
-    }
+    });
+    balls.push(Ball {
+        x: V::new(0.9, 0.0, 0.0),
+        v: V::new(1.0, 1.0, 1.1),
+        m: 3.0,
+        r: 0.2,
+    });
+    // for &x in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
+    //     for &y in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
+    //         for &z in &[-2.0, -1.0, 0.0, 1.0, 2.0] {
+    //             balls.push(Ball {
+    //                 x: V::new(x * 0.2, y * 0.2, z * 0.2),
+    //                 v: V::new(x * 0.2, y * 0.2, z * 0.2),
+    //                 m: 1.0,
+    //                 r: 0.1,
+    //             });
+    //         }
+    //     }
+    // }
 
     let mut walls = vec![
+        Wall {
+            x: V::new(0.0, 0.0, 0.0),
+            v: V::new(0.5, 0.0, 0.0),
+            j: V::new(0.0, 1.0, 0.0),
+            k: V::new(0.0, 0.0, 1.0),
+            m: core::f64::INFINITY,
+        },
         Wall {
             x: V::new(1.0, -1.0, -1.0),
             v: V::new(0.0, 0.0, 0.0),
@@ -49,7 +65,7 @@ fn main() {
         },
         Wall {
             x: V::new(-1.0, -1.0, -1.0),
-            v: V::new(0.5, 0.0, 0.0),
+            v: V::new(0.0, 0.0, 0.0),
             j: V::new(0.0, 2.0, 0.0),
             k: V::new(0.0, 0.0, 2.0),
             m: core::f64::INFINITY,
@@ -245,18 +261,17 @@ fn main() {
             balls = new_balls.clone();
             walls = new_walls.clone();
 
-            let (new_balls_, new_walls_, dt_s, _work) =
-                evolve(balls.clone(), walls.clone(), 10.0);
+            let (new_balls_, new_walls_, dt_s, _work) = evolve(balls.clone(), walls.clone(), 10.0);
             new_balls = new_balls_;
             new_walls = new_walls_;
             dt = dt_s;
 
-            println!("{} {}", new_walls[1].x, new_walls[1].v);
-            if new_walls[1].x.0 > 0.43 && new_walls[1].v.0 > 0.0 {
-                new_walls[1].v = -new_walls[1].v;
+            // println!("{} {}", new_walls[1].x, new_walls[1].v);
+            if new_walls[0].x.0 > 0.2 && new_walls[0].v.0 > 0.0 {
+                new_walls[0].v = -new_walls[0].v;
             }
-            if new_walls[1].x.0 < -2.0 && new_walls[1].v.0 < 0.0 {
-                new_walls[1].v = -new_walls[1].v;
+            if new_walls[0].x.0 < -0.2 && new_walls[0].v.0 < 0.0 {
+                new_walls[0].v = -new_walls[0].v;
             }
         }
 
