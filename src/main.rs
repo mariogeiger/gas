@@ -41,39 +41,45 @@ fn main() {
 
     let mut walls = vec![
         Wall {
-            x: V::new(1.0, 0.0, 0.0),
+            x: V::new(1.0, -1.0, -1.0),
             v: V::new(0.0, 0.0, 0.0),
-            n: V::new(1.0, 0.0, 0.0),
+            j: V::new(0.0, 2.0, 0.0),
+            k: V::new(0.0, 0.0, 2.0),
             m: core::f64::INFINITY,
         },
         Wall {
-            x: V::new(-2.0, 0.0, 0.0),
-            v: V::new(1.0, 0.0, 0.0),
-            n: V::new(1.0, 0.0, 0.0),
+            x: V::new(-1.0, -1.0, -1.0),
+            v: V::new(0.5, 0.0, 0.0),
+            j: V::new(0.0, 2.0, 0.0),
+            k: V::new(0.0, 0.0, 2.0),
             m: core::f64::INFINITY,
         },
         Wall {
-            x: V::new(0.0, 1.0, 0.0),
+            x: V::new(-1.0, -1.0, -1.0),
             v: V::new(0.0, 0.0, 0.0),
-            n: V::new(0.0, 1.0, 0.0),
+            j: V::new(2.0, 0.0, 0.0),
+            k: V::new(0.0, 0.0, 2.0),
             m: core::f64::INFINITY,
         },
         Wall {
-            x: V::new(0.0, -1.0, 0.0),
+            x: V::new(-1.0, 1.0, -1.0),
             v: V::new(0.0, 0.0, 0.0),
-            n: V::new(0.0, 1.0, 0.0),
+            j: V::new(2.0, 0.0, 0.0),
+            k: V::new(0.0, 0.0, 2.0),
             m: core::f64::INFINITY,
         },
         Wall {
-            x: V::new(0.0, 0.0, 1.0),
+            x: V::new(-1.0, -1.0, -1.0),
             v: V::new(0.0, 0.0, 0.0),
-            n: V::new(0.0, 0.0, 1.0),
+            j: V::new(2.0, 0.0, 0.0),
+            k: V::new(0.0, 2.0, 0.0),
             m: core::f64::INFINITY,
         },
         Wall {
-            x: V::new(0.0, 0.0, -1.0),
+            x: V::new(-1.0, -1.0, 1.0),
             v: V::new(0.0, 0.0, 0.0),
-            n: V::new(0.0, 0.0, 1.0),
+            j: V::new(2.0, 0.0, 0.0),
+            k: V::new(0.0, 2.0, 0.0),
             m: core::f64::INFINITY,
         },
     ];
@@ -94,23 +100,15 @@ fn main() {
             normal: [0.0, 0.0, 1.0],
         },
         Vertex {
-            position: [1.0, 0.0, 0.0, 0.0],
+            position: [1.0, 0.0, 0.0, 1.0],
             normal: [0.0, 0.0, 1.0],
         },
         Vertex {
-            position: [0.0, 1.0, 0.0, 0.0],
+            position: [1.0, 1.0, 0.0, 1.0],
             normal: [0.0, 0.0, 1.0],
         },
         Vertex {
-            position: [-1.0, 0.0, 0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [0.0, -1.0, 0.0, 0.0],
-            normal: [0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [1.0, 0.0, 0.0, 0.0],
+            position: [0.0, 1.0, 0.0, 1.0],
             normal: [0.0, 0.0, 1.0],
         },
     ];
@@ -248,7 +246,7 @@ fn main() {
             walls = new_walls.clone();
 
             let (new_balls_, new_walls_, dt_s, _work) =
-                evolve(balls.clone(), walls.clone(), core::f64::INFINITY);
+                evolve(balls.clone(), walls.clone(), 10.0);
             new_balls = new_balls_;
             new_walls = new_walls_;
             dt = dt_s;
@@ -321,9 +319,15 @@ fn main() {
         // draw walls
         for (i, w) in walls.iter().enumerate() {
             let x = w.x + ddt * w.v;
+            let m = Mat4::from_array([
+                [w.j.0 as f32, w.j.1 as f32, w.j.2 as f32, 0.0],
+                [w.k.0 as f32, w.k.1 as f32, w.k.2 as f32, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
 
             let uniform = uniform! {
-                model: (Mat4::translation(x.0 as f32, x.1 as f32, x.2 as f32) * Mat4::rotation_from_normal(w.n.0 as f32, w.n.1 as f32, w.n.2 as f32)).as_array(),
+                model: (Mat4::translation(x.0 as f32, x.1 as f32, x.2 as f32) * m).as_array(),
                 view: view.as_array(),
                 perspective: pers.as_array(),
                 uniform_color: [
@@ -342,16 +346,16 @@ fn main() {
                     write: false,
                     ..Default::default()
                 },
-                blend: glium::Blend{
-                        color: glium::BlendingFunction::Addition {
-                            source: glium::LinearBlendingFactor::SourceAlpha,
-                            destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
-                        },
-                        alpha: glium::BlendingFunction::Addition {
-                            source: glium::LinearBlendingFactor::Zero,
-                            destination: glium::LinearBlendingFactor::One,
-                        },
-                        constant_value: (0.0, 0.0, 0.0, 0.0)
+                blend: glium::Blend {
+                    color: glium::BlendingFunction::Addition {
+                        source: glium::LinearBlendingFactor::SourceAlpha,
+                        destination: glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                    },
+                    alpha: glium::BlendingFunction::Addition {
+                        source: glium::LinearBlendingFactor::Zero,
+                        destination: glium::LinearBlendingFactor::One,
+                    },
+                    constant_value: (0.0, 0.0, 0.0, 0.0),
                 },
                 ..Default::default()
             };

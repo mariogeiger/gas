@@ -65,6 +65,9 @@ impl Mat4 {
             [0.0, 0.0, 0.0, 1.0],
         ])
     }
+    pub fn from_array(a: [[f32; 4]; 4]) -> Mat4 {
+        Mat4(a)
+    }
     pub fn scale(s: f32) -> Mat4 {
         Mat4([
             [s, 0.0, 0.0, 0.0],

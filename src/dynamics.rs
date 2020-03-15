@@ -1,6 +1,6 @@
 use core;
 
-use crate::vec3::{dot, V};
+use crate::vec3::{dot, cross, V};
 
 #[derive(Debug, Clone)]
 pub struct Ball {
@@ -14,7 +14,8 @@ pub struct Ball {
 pub struct Wall {
     pub x: V,
     pub v: V,
-    pub n: V,
+    pub j: V,
+    pub k: V,
     pub m: f64,
 }
 
@@ -38,12 +39,24 @@ fn ball_ball_collision_time(a: &Ball, b: &Ball) -> f64 {
 
 fn ball_wall_collision_time(a: &Ball, w: &Wall) -> f64 {
     // do in frame of `w`
-    let x = a.x - w.x;
+    let mut x = a.x - w.x;
     let v = a.v - w.v;
-    let vn = dot(v, w.n);
-    let xn = dot(x, w.n);
+    let mut n = cross(w.j, w.k);
+    let njck = n.norm();
+    n /= njck;
+    let vn = dot(v, n);
+    let xn = dot(x, n);
     if xn * vn < 0.0 {
-        -xn / vn - (a.r / vn).abs()
+        let t = -xn / vn - (a.r / vn).abs();
+        x += t * v;
+        let xcn = cross(x, n);
+        let a = -dot(xcn, w.k) / njck;
+        let b = dot(xcn, w.j) / njck;
+        if a < 0.0 || a > 1.0 || b < 0.0 || b > 1.0 {
+            core::f64::INFINITY
+        } else {
+            t
+        }
     } else {
         core::f64::INFINITY
     }
@@ -61,7 +74,7 @@ fn collision(n: V, mut va: V, ma: f64, mut vb: V, mb: f64) -> (V, V) {
     // go in rest frame
     va -= fv;
     vb -= fv;
-    va -= 2.0 * dot(n, va) * n;
+    va -= 2.0 * dot(n, va) * n / dot(n, n);
     vb = -ma / mb * va;
     // go back in original frame
     va += fv;
@@ -70,13 +83,13 @@ fn collision(n: V, mut va: V, ma: f64, mut vb: V, mb: f64) -> (V, V) {
 }
 
 fn ball_ball_collision(a: &Ball, b: &Ball) -> (V, V) {
-    let mut n = b.x - a.x;
-    n = n / n.norm();
+    let n = b.x - a.x;
     collision(n, a.v, a.m, b.v, b.m)
 }
 
 fn ball_wall_collision(a: &Ball, w: &Wall) -> (V, V) {
-    collision(w.n, a.v, a.m, w.v, w.m)
+    let n = cross(w.j, w.k);
+    collision(n, a.v, a.m, w.v, w.m)
 }
 
 pub fn evolve(
@@ -124,7 +137,7 @@ pub fn evolve(
         balls[bi as usize].v = va;
         balls[bj as usize].v = vb;
     }
-    if bj == -1 {
+    if w >= 0 {
         let a = &mut balls[bi as usize];
         let w = &mut walls[w as usize];
         let (va, vw) = ball_wall_collision(a, w);

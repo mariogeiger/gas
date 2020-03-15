@@ -14,6 +14,14 @@ pub fn dot(a: V, b: V) -> f64 {
     a.0 * b.0 + a.1 * b.1 + a.2 * b.2
 }
 
+pub fn cross(a: V, b: V) -> V {
+    V(
+        a.1 * b.2 - a.2 * b.1,
+        a.2 * b.0 - a.0 * b.2,
+        a.0 * b.1 - a.1 * b.0,
+    )
+}
+
 impl std::ops::Neg for V {
     type Output = V;
     fn neg(self) -> V {
@@ -69,6 +77,14 @@ impl std::ops::Div<f64> for V {
     type Output = V;
     fn div(self, b: f64) -> V {
         V(self.0 / b, self.1 / b, self.2 / b)
+    }
+}
+
+impl std::ops::DivAssign<f64> for V {
+    fn div_assign(&mut self, b: f64) {
+        self.0 /= b;
+        self.1 /= b;
+        self.2 /= b;
     }
 }
 
