@@ -94,58 +94,55 @@ fn ball_wall_collision(a: &Ball, w: &Wall) -> (V, V) {
 }
 
 pub fn evolve(
-    mut balls: Vec<Ball>,
-    mut walls: Vec<Wall>,
+    balls: &mut Vec<Ball>,
+    walls: &mut Vec<Wall>,
     mut dt: f64,
-) -> (Vec<Ball>, Vec<Wall>, f64, f64) {
-    let mut bi = -1;
-    let mut bj = -1;
-    let mut w = -1;
+) -> (f64, f64) {
+    let mut indices_bb = None;
+    let mut indices_bw = None;
 
     for i in 0..balls.len() {
         for j in i + 1..balls.len() {
             let tmp = ball_ball_collision_time(&balls[i], &balls[j]);
             if tmp < dt {
-                bi = i as isize;
-                bj = j as isize;
-                w = -1;
+                indices_bb = Some((i, j));
+                indices_bw = None;
                 dt = tmp;
             }
         }
         for j in 0..walls.len() {
             let tmp = ball_wall_collision_time(&balls[i], &walls[j]);
             if tmp < dt {
-                bi = i as isize;
-                bj = -1;
-                w = j as isize;
+                indices_bb = None;
+                indices_bw = Some((i, j));
                 dt = tmp;
             }
         }
     }
 
     if dt > 0.0 {
-        for a in &mut balls {
+        for a in balls.iter_mut() {
             a.x += a.v * dt;
         }
-        for w in &mut walls {
+        for w in walls.iter_mut() {
             w.x += w.v * dt;
         }
     }
 
     let mut work = 0.0;
-    if bj >= 0 {
-        let (va, vb) = ball_ball_collision(&balls[bi as usize], &balls[bj as usize]);
-        balls[bi as usize].v = va;
-        balls[bj as usize].v = vb;
+    if let Some((i, j)) = indices_bb {
+        let (va, vb) = ball_ball_collision(&balls[i], &balls[j]);
+        balls[i].v = va;
+        balls[j].v = vb;
     }
-    if w >= 0 {
-        let a = &mut balls[bi as usize];
-        let w = &mut walls[w as usize];
+    if let Some((i, j)) = indices_bw {
+        let a = &mut balls[i];
+        let w = &mut walls[j];
         let (va, vw) = ball_wall_collision(a, w);
         work = dot(a.m * (va - a.v), w.v);
         a.v = va;
         w.v = vw;
     }
 
-    (balls, walls, dt, work)
+    (dt, work)
 }
