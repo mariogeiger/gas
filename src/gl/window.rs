@@ -1,9 +1,9 @@
 use crate::dynamics::{Ball, Wall};
+use crate::gl::camera::Camera;
 use crate::gl::math::Mat4;
 use crate::gl::sphere::Sphere;
 use glium::glutin;
 use glium::Surface;
-use std::collections::HashMap;
 
 #[derive(Clone, Copy)]
 struct Vertex {
@@ -140,17 +140,7 @@ where
     let mut balls = Vec::new();
     let mut walls = Vec::new();
 
-    let mut view = Mat4::translation(0.0, 0.0, -4.0)
-        * Mat4::rotation(0.0, 1.0, 0.0, 0.0)
-        * Mat4::rotation(std::f32::consts::FRAC_PI_4, 1.0, 0.0, 1.0)
-        * Mat4::scale(1.0);
-
-    let mut last_cursor_position = glutin::dpi::PhysicalPosition::new(0.0, 0.0);
-    let mut left_button_state = glutin::event::ElementState::Released;
-
-    let mut modifiers_state = glutin::event::ModifiersState::empty();
-    let mut key_state: HashMap<glutin::event::VirtualKeyCode, glium::glutin::event::ElementState> =
-        HashMap::new();
+    let mut camera = Camera::new(Mat4::translation(0.0, 0.0, -6.0));
 
     event_loop.run(move |event, _, control_flow| {
         let next_frame_time =
@@ -163,80 +153,15 @@ where
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
                 }
-                glutin::event::WindowEvent::CursorMoved { position, .. } => {
-                    if left_button_state == glutin::event::ElementState::Pressed {
-                        let dx = (position.x - last_cursor_position.x) as f32;
-                        let dy = (position.y - last_cursor_position.y) as f32;
-                        view = Mat4::rotation(-0.01 * dy, 1.0, 0.0, 0.0) * view;
-                        view = Mat4::rotation(-0.01 * dx, 0.0, 1.0, 0.0) * view;
-                    }
-                    last_cursor_position = *position;
-                }
-                glutin::event::WindowEvent::MouseInput {
-                    state,
-                    button: glutin::event::MouseButton::Left,
-                    ..
-                } => {
-                    left_button_state = *state;
-                }
-                glutin::event::WindowEvent::KeyboardInput {
-                    input:
-                        glutin::event::KeyboardInput {
-                            state,
-                            virtual_keycode,
-                            ..
-                        },
-                    ..
-                } => {
-                    if let Some(key) = virtual_keycode {
-                        key_state.insert(*key, *state);
-                    }
-                }
-                _ => (),
-            },
-            glutin::event::Event::DeviceEvent { event, .. } => match event {
-                glutin::event::DeviceEvent::ModifiersChanged(state) => {
-                    modifiers_state = *state;
-                }
                 _ => (),
             },
             _ => (),
         }
 
+        camera.update(&event);
+
         if (std::time::Instant::now() - last).as_secs_f64() < 1.0 / 120.0 {
             return;
-        }
-        {
-            let dt = (std::time::Instant::now() - last).as_secs_f32();
-            let v = if modifiers_state.shift() { 10.0 } else { 1.0 };
-            if key_state
-                .entry(glutin::event::VirtualKeyCode::W)
-                .or_insert(glutin::event::ElementState::Released)
-                == &glutin::event::ElementState::Pressed
-            {
-                view = Mat4::translation(0.0, 0.0, v * dt) * view;
-            }
-            if key_state
-                .entry(glutin::event::VirtualKeyCode::S)
-                .or_insert(glutin::event::ElementState::Released)
-                == &glutin::event::ElementState::Pressed
-            {
-                view = Mat4::translation(0.0, 0.0, -v * dt) * view;
-            }
-            if key_state
-                .entry(glutin::event::VirtualKeyCode::A)
-                .or_insert(glutin::event::ElementState::Released)
-                == &glutin::event::ElementState::Pressed
-            {
-                view = Mat4::translation(-v * dt, 0.0, 0.0) * view;
-            }
-            if key_state
-                .entry(glutin::event::VirtualKeyCode::D)
-                .or_insert(glutin::event::ElementState::Released)
-                == &glutin::event::ElementState::Pressed
-            {
-                view = Mat4::translation(v * dt, 0.0, 0.0) * view;
-            }
         }
 
         last = std::time::Instant::now();
@@ -287,7 +212,7 @@ where
 
             let uniform = uniform! {
                 model: model.as_array(),
-                view: view.as_array(),
+                view: camera.view.as_array(),
                 perspective: pers.as_array(),
                 light: [0., 0., -3f32],
                 high_color: if i == 0 {[1.0, 0.0, 0.0f32]} else {[0.7, 0.7, 0.7f32]},
@@ -317,7 +242,7 @@ where
 
             let uniform = uniform! {
                 model: (Mat4::translation(x.0 as f32, x.1 as f32, x.2 as f32) * m).as_array(),
-                view: view.as_array(),
+                view: camera.view.as_array(),
                 perspective: pers.as_array(),
                 uniform_color: [
                     [0.5, 0., 0., 0.1f32],
