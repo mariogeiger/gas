@@ -98,23 +98,29 @@ pub fn evolve(
     walls: &mut Vec<Wall>,
     mut dt: f64,
 ) -> (f64, f64) {
-    let mut indices_bb = None;
-    let mut indices_bw = None;
+    let mut indices_bb = Vec::new();
+    let mut indices_bw = Vec::new();
 
     for i in 0..balls.len() {
         for j in i + 1..balls.len() {
             let tmp = ball_ball_collision_time(&balls[i], &balls[j]);
             if tmp < dt {
-                indices_bb = Some((i, j));
-                indices_bw = None;
+                indices_bb.clear();
+                indices_bw.clear();
+            }
+            if tmp <= dt {
+                indices_bb.push((i, j));
                 dt = tmp;
             }
         }
         for j in 0..walls.len() {
             let tmp = ball_wall_collision_time(&balls[i], &walls[j]);
             if tmp < dt {
-                indices_bb = None;
-                indices_bw = Some((i, j));
+                indices_bb.clear();
+                indices_bw.clear();
+            }
+            if tmp <= dt {
+                indices_bw.push((i, j));
                 dt = tmp;
             }
         }
@@ -130,12 +136,12 @@ pub fn evolve(
     }
 
     let mut work = 0.0;
-    if let Some((i, j)) = indices_bb {
+    for (i, j) in indices_bb {
         let (va, vb) = ball_ball_collision(&balls[i], &balls[j]);
         balls[i].v = va;
         balls[j].v = vb;
     }
-    if let Some((i, j)) = indices_bw {
+    for (i, j) in indices_bw {
         let a = &mut balls[i];
         let w = &mut walls[j];
         let (va, vw) = ball_wall_collision(a, w);
