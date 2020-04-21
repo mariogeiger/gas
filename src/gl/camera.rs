@@ -61,10 +61,7 @@ impl Camera {
                         }
                     }
                 }
-                _ => (),
-            },
-            event::Event::DeviceEvent { event, .. } => match event {
-                event::DeviceEvent::ModifiersChanged(state) => {
+                event::WindowEvent::ModifiersChanged(state) => {
                     self.modifiers_state = *state;
                 }
                 _ => (),
