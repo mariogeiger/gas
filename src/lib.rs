@@ -9,36 +9,75 @@ use core;
 use dynamics::{evolve, Ball, Wall};
 use vec3::V;
 
-fn main() {
+use pyo3::prelude::{
+    pyclass, pyfunction, pymethods, pymodule, PyModule, PyObject, PyResult, Python,
+};
+use pyo3::wrap_pyfunction;
+
+#[pymodule]
+fn gas(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_wrapped(wrap_pyfunction!(visualize_example))?;
+    m.add_class::<State>()?;
+    Ok(())
+}
+
+#[pyclass]
+#[derive(Default)]
+pub struct State {
+    balls: Vec<Ball>,
+    walls: Vec<Wall>,
+}
+
+#[pymethods]
+impl State {
+    #[new]
+    fn new() -> Self {
+        State::default()
+    }
+
+    fn add_ball(&mut self, position: (f64, f64, f64), speed: (f64, f64, f64), m: f64, r: f64) {
+        self.balls.push(Ball {
+            x: V::new(position.0, position.1, position.2),
+            v: V::new(speed.0, speed.1, speed.2),
+            m: m,
+            r: r,
+        })
+    }
+
+    fn add_wall(
+        &mut self,
+        position: (f64, f64, f64),
+        speed: (f64, f64, f64),
+        j: (f64, f64, f64),
+        k: (f64, f64, f64),
+        m: f64,
+    ) {
+        self.walls.push(Wall {
+            x: V::new(position.0, position.1, position.2),
+            v: V::new(speed.0, speed.1, speed.2),
+            j: V::new(j.0, j.1, j.2),
+            k: V::new(k.0, k.1, k.2),
+            m: m,
+        })
+    }
+
+    fn visualize(&self) {
+        let mut balls = self.balls.clone();
+        let mut walls = self.walls.clone();
+
+        gl::window::visualize(move || {
+            let old_balls = balls.clone();
+            let old_walls = walls.clone();
+
+            let (dt, _work) = evolve(&mut balls, &mut walls, 10.0);
+            (dt, old_balls, old_walls)
+        });
+    }
+}
+
+#[pyfunction]
+fn visualize_example() {
     let mut balls = Vec::new();
-    // balls.push(Ball {
-    //     x: V::new(-1.0, 0.0, 0.0),
-    //     v: V::new(5.0, 0.0, 0.0),
-    //     m: 1.0,
-    //     r: 0.1,
-    // });
-
-    // for i in 0..5 {
-    //     balls.push(Ball {
-    //         x: V::new(i as f64 * 0.2, 0.0, 0.),
-    //         v: V::new(0.0, 0.0, 0.),
-    //         m: 1.0,
-    //         r: 0.1,
-    //     });
-    // }
-
-    // balls.push(Ball {
-    //     x: V::new(0.0, 0.1, 0.),
-    //     v: V::new(0.0, 0.0, 0.),
-    //     m: 1.0,
-    //     r: 0.1,
-    // });
-    // balls.push(Ball {
-    //     x: V::new(0.0, -0.1, 0.),
-    //     v: V::new(0.0, 0.0, 0.),
-    //     m: 1.0,
-    //     r: 0.1,
-    // });
 
     for &x in &[-2.0, -1.0, 0.0, 1.0, 2.0, 3.0] {
         for &y in &[-2.0, -1.0, 0.0, 1.0, 2.0, 3.0] {
@@ -114,7 +153,7 @@ fn main() {
 
         let (dt, _work) = evolve(&mut balls, &mut walls, 10.0);
 
-        println!("{:.4}", dt);
+        // println!("{:.4}", dt);
 
         (dt, old_balls, old_walls)
     });
