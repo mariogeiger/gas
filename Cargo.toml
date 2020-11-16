@@ -1,6 +1,6 @@
 [package]
 name = "gas"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Mario Geiger <geiger.mario@gmail.com>"]
 edition = "2018"
 
@@ -14,5 +14,5 @@ crate-type = ["cdylib"]
 glium = "*"
 
 [dependencies.pyo3]
-version = "0.10.1"
+version = "*"
 features = ["extension-module"]

@@ -10,7 +10,7 @@ use dynamics::{evolve, Ball, Wall};
 use vec3::V;
 
 use pyo3::prelude::{
-    pyclass, pyfunction, pymethods, pymodule, PyModule, PyObject, PyResult, Python,
+    pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python,
 };
 use pyo3::wrap_pyfunction;
 
